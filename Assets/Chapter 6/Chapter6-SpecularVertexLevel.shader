@@ -1,8 +1,12 @@
-﻿Shader "Unity Shaders Book/Chapter 6/Chapter6-DiffuseVertexLevel"
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Unity Shaders Book/Chapter 6/Chapter6-SpecularVertexLevel"
 {
     Properties
     {
         _Diffuse ("Diffuse", Color) = (1,1,1,1)
+        _Specular ("Specular", Color) = (1,1,1,1)
+        _Gloss ("Gloss", Range(8.0, 256)) = 20 
     }
     SubShader
     {
@@ -16,6 +20,8 @@
                 #include "Lighting.cginc"
 
                 fixed4 _Diffuse;
+                fixed4 _Specular;
+                float _Gloss;
 
                 struct a2v {
                     float4 vertex : POSITION;   // 顶点位置
@@ -31,17 +37,21 @@
                     v2f o;
                     // 从模型空间转移到裁剪空间坐标
                     o.pos = UnityObjectToClipPos(v.vertex);
-                    // 获得环境光
+                    // 获得环境光 
                     fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
                     // 把法线转换到世界空间下
-                    fixed3 worldNormal = UnityObjectToWorldNormal(v.normal);
-                    //fixed3 worldNormal = normalize(mul((float3x3)unity_ObjectToWorld, v.normal));
+                    fixed3 worldNormalDir = UnityObjectToWorldNormal(v.normal);
                     
                     // 获得顶点指向光源的向量
                     fixed3 worldLight = normalize(_WorldSpaceLightPos0.xyz);
-                    // 计算
-                    fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLight));
-                    o.color = ambient + diffuse;
+                    // 计算漫反射
+                    fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormalDir, worldLight));
+                    // 计算高光反射
+                    // 反射方向
+                    fixed3 lightReflectDir = normalize(reflect(-worldLight, worldNormalDir));
+                    fixed3 worldViewDir = normalize(WorldSpaceViewDir(v.vertex));
+                    fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(lightReflectDir, worldViewDir)), _Gloss);
+                    o.color = ambient + diffuse + specular;
                     return o;
                 }
 
@@ -52,5 +62,5 @@
             ENDCG
         }
     }
-    Fallback "Diffuse"
+    Fallback "Specular"
 }
