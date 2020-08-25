@@ -22,6 +22,7 @@ Shader "Unity Shaders Book/Chapter 7/Normal Map In Tangent Space"
             #pragma fragment frag
 
             #include "Lighting.cginc"
+            #include "UnityCG.cginc"
 
             fixed4 _Color;
             sampler2D _MainTex;
@@ -49,29 +50,40 @@ Shader "Unity Shaders Book/Chapter 7/Normal Map In Tangent Space"
             v2f vert(a2v v) {
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
-                o.uv.xy = TRANSFORM_TEX(v.texcoord, _MainTex);
-                o.uv.zw = TRANSFORM_TEX(v.texcoord, _BumpMap);
+                o.uv.xy = TRANSFORM_TEX(v.texcoord, _MainTex);          // xy对应主纹理的uv
+                o.uv.zw = TRANSFORM_TEX(v.texcoord, _BumpMap);          // zw对应法线的uv
                 // => o.uv = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw;
 
                 // 计算切线空间下的lightDir和viewDir
-                o.lightDir = normalize(WorldSpaceLightDir(v.vertex));
-                o.viewDir = normalize(WorldSpaceViewDir(v.vertex));
+                TANGENT_SPACE_ROTATION;
+                // 在UnityCG.cginc中定义了
+                // #define TANGENT_SPACE_ROTATION \
+                // float3 binormal = cross( normalize(v.normal), normalize(v.tangent.xyz) ) * v.tangent.w; \
+                // float3x3 rotation = float3x3( v.tangent.xyz, binormal, v.normal )
+
+                o.lightDir = mul(rotation, ObjSpaceLightDir(v.vertex));
+                o.viewDir = mul(rotation, ObjSpaceViewDir(v.vertex));
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target{
-                fixed3 worldNormal = normalize(i.worldNormal);
-                fixed3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
+                fixed3 tangentLightDir = normalize(i.lightDir);
+                fixed3 tangentViewDir = normalize(i.viewDir);
+
+                fixed4 packedNormal = tex2D(_BumpMap, i.uv.zw); // 获得bumpMap在对应uv的rgba
+                fixed3 tangentNormal = UnpackNormal(packedNormal);  // normalMap的分量有可能是负数,所以一开始会从[-1,1]映射到[0,1],需要重新映射回去
+                tangentNormal.xy *= _BumpScale;
+                tangentNormal.z = sqrt(1.0 - saturate(dot(tangentNormal.xy, tangentNormal.xy)));
 
                 fixed3 albedo = tex2D(_MainTex, i.uv).rgb * _Color.rgb;
 
                 fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz * albedo;
 
-                fixed3 diffuse = _LightColor0.rgb * albedo * saturate(dot(worldNormal, worldLightDir));
+                fixed3 diffuse = _LightColor0.rgb * albedo * saturate(dot(tangentNormal, tangentLightDir));
 
-                fixed3 viewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
-                fixed3 halfDir = normalize(worldLightDir + viewDir);    // blinn-phong
-                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(worldNormal, halfDir)), _Gloss);
+                fixed3 halfDir = normalize(tangentLightDir + tangentViewDir);    // blinn-phong
+
+                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(tangentNormal, halfDir)), _Gloss);
 
                 return fixed4(ambient + diffuse + specular, 1.0);
             }
