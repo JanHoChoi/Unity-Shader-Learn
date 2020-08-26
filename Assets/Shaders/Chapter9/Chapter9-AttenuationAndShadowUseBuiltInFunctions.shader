@@ -1,58 +1,143 @@
-﻿Shader "Unity Shaders Book/Chapter 9/Attenuation And Shadow"
+﻿// Upgrade NOTE: replaced '_LightMatrix0' with 'unity_WorldToLight'
+
+Shader "Unity Shaders Book/Chapter 9/Shadow"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _Diffuse ("Diffuse", Color) = (1,1,1,1)
+        _Specular ("Specular", Color) = (1,1,1,1)
+        _Gloss ("Gloss", Range(8, 256)) = 20        
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 100
 
         Pass
         {
+            Tags { "LightMode" = "ForwardBase" }
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
+
+            #pragma multi_compile_fwdbase
 
             #include "UnityCG.cginc"
+            #include "Lighting.cginc"
+            #include "AutoLight.cginc"
 
-            struct appdata
+            struct a2v
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
+                float4 pos : SV_POSITION;
+                float3 worldNormal : TEXCOORD0;
+                float3 worldPos : TEXCOORD1;
+                SHADOW_COORDS(2)   // 2表示下一个可用的插值寄存器的索引值比如TEXCOORD2就是2
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
+            fixed4 _Diffuse;
+            fixed4 _Specular;
+            float _Gloss;
 
-            v2f vert (appdata v)
+            v2f vert (a2v v)
             {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
-                return o;
+                v2f output;
+                output.pos = UnityObjectToClipPos(v.vertex);
+                output.worldNormal = UnityObjectToWorldNormal(v.normal);
+                output.worldPos = mul(unity_ObjectToWorld, v.vertex);
+                TRANSFER_SHADOW(output);
+                return output;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag (v2f input) : SV_Target
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
+                float3 worldNormal = normalize(input.worldNormal);
+                float3 worldLightDir = normalize(UnityWorldSpaceLightDir(input.worldPos));
+                float3 worldViewDir = normalize(UnityWorldSpaceViewDir(input.worldPos));
+                float halfDir = normalize(worldLightDir + worldViewDir);
+
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLightDir));
+
+                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(worldNormal, halfDir)), _Gloss);
+                
+                UNITY_LIGHT_ATTENUATION(atten, input, input.worldPos);
+                // atten = 光照衰减*阴影值, 不需要手动定义
+
+                return fixed4(ambient + (diffuse + specular) * atten, 1.0);
             }
             ENDCG
         }
+
+        Pass
+        {
+            Tags { "LightMode" = "ForwardAdd"}
+
+            Blend One One
+
+            CGPROGRAM
+    
+            #pragma multi_compile_fwdadd_fullshadows
+
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #include "Lighting.cginc"
+            #include "AutoLight.cginc"
+
+            fixed4 _Diffuse;
+            fixed4 _Specular;
+            float _Gloss;
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL;
+            };
+
+            struct v2f
+            {
+                float4 pos : SV_POSITION;
+                float3 worldNormal : TEXCOORD0;
+                float3 worldPos : TEXCOORD1;
+            };
+
+            v2f vert (a2v input)
+            {
+                v2f output;
+                output.pos = UnityObjectToClipPos(input.vertex);
+                output.worldNormal = UnityObjectToWorldNormal(input.normal);
+                output.worldPos = mul(unity_ObjectToWorld, input.vertex).xyz;
+                return output;
+            }
+
+            fixed4 frag (v2f input) : SV_Target
+            {
+                fixed3 worldNormal = normalize(input.worldNormal);
+				#ifdef USING_DIRECTIONAL_LIGHT
+					fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz);
+				#else
+					fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz - input.worldPos.xyz);
+				#endif
+
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLightDir));
+                float3 worldViewDir = normalize(_WorldSpaceCameraPos.xyz - input.worldPos.xyz);
+                float3 halfDir = normalize(worldLightDir + worldViewDir);
+                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(worldNormal, halfDir)), _Gloss);      
+				
+                UNITY_LIGHT_ATTENUATION(atten, input, input.worldPos);
+            
+                return fixed4((diffuse + specular) * atten, 1.0);
+            }
+
+            ENDCG
+        }
     }
+    FallBack "Specular"
 }
