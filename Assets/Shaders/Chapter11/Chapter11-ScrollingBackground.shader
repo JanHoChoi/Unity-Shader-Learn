@@ -38,7 +38,7 @@
             float4 _DetailTex_ST;
             float _ScrollX, _Scroll2ndX, _Multiplier;
 
-            v2f vert (appdata v)
+            v2f vert (a2v v)
             {
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
@@ -49,7 +49,11 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
-                
+                fixed4 firstLayer = tex2D(_MainTex, i.uv.xy);
+                fixed4 secondLayer = tex2D(_DetailTex, i.uv.zw);
+                fixed4 c = lerp(firstLayer, secondLayer, secondLayer.a);
+                c.rgb *= _Multiplier;
+                return c;
             }
             ENDCG
         }
