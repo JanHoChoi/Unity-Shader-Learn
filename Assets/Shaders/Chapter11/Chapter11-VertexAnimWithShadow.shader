@@ -1,4 +1,4 @@
-﻿Shader "Unity Shaders Book/Chapter 11/Water"
+﻿Shader "Unity Shaders Book/Chapter 11/Vertex Animation With Shadow"
 {
     Properties
     {
@@ -63,5 +63,49 @@
             }
             ENDCG
         }
+
+        Pass
+        {
+            Tags { "LightMode"="ShadowCaster" }
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #pragma multi_compile_shadowcaster
+
+            #include "UnityCG.cginc"
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL;
+            };
+
+            struct v2f
+            {
+            	V2F_SHADOW_CASTER;
+            };
+
+            float _Magnitude, _Frequency, _InvWaveLength, _Speed;
+
+            v2f vert (a2v v)
+            {
+                v2f o;
+                float4 offset;
+                offset.yzw = float3(0, 0, 0);
+                offset.x = _Magnitude * sin(_Frequency * _Time.y + v.vertex.x * _InvWaveLength + v.vertex.z * _InvWaveLength);	// wave大 InvWave小 则相邻x相差小 看起来水波更长更缓和
+                v.vertex = v.vertex + offset;
+                TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
+                return o;
+            }
+
+            fixed4 frag (v2f i) : SV_Target{
+                SHADOW_CASTER_FRAGMENT(i)
+            }
+            ENDCG
+        }
     }
+
+    Fallback Off
 }
