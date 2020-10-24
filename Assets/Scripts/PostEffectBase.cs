@@ -12,7 +12,6 @@ public class PostEffectBase : MonoBehaviour
             return null;
         if(material && material.shader == shader)
             return material;
-        Debug.Log("???");
         material = new Material(shader);
         material.hideFlags = HideFlags.DontSave;
         Debug.Log(material.name);
