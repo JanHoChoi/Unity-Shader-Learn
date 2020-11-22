@@ -121,6 +121,91 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &1281625777
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 100002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_Name
+      value: suzanne
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.0026712557
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.9908512
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.1349591
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.029017186
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 164.48701
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400002, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2300000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 69febef5b029f4dbeaa0a96a3041d2d1, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 44e861aa1c32b40b98ea93eb35f1c5eb, type: 3}
 --- !u!1 &1349762123
 GameObject:
   m_ObjectHideFlags: 0
@@ -290,7 +375,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1411843463}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: -0.15, z: -2.76}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

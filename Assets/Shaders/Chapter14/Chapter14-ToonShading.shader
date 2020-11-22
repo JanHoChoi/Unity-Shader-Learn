@@ -1,6 +1,4 @@
-﻿// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
-
-Shader "Unity Shaders Book/Chapter 14/Toon Shading"
+﻿Shader "Unity Shaders Book/Chapter 14/Toon Shading"
 {
     Properties
     {
@@ -14,7 +12,7 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
     }
     SubShader
     {
-
+        Tags { "RenderType"="Opaque" "Queue"="Geometry"}
         Pass
         {
             NAME "OUTLINE"
@@ -25,17 +23,14 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
             #pragma vertex vert
             #pragma fragment frag
 
-            fixed4 _Color;
-            sampler2D _MainTex;
-            sampler2D _Ramp;
+            #include "UnityCG.cginc"
+
             float _Outline;
             fixed4 _OutlineColor;
-            fixed4 _Specular;
-            float _SpecularScale;
             
             struct a2v
             {
-                float4 vertex : POSITION;
+                float3 vertex : POSITION;
                 float3 normal : NORMAL;
             };
 
@@ -48,8 +43,8 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
             {
                 v2f o;
 
-                float4 pos = UnityObjectToViewPos(v.vertex);
-                float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal) // 把法线转换到视觉view空间
+                float4 pos = float4(UnityObjectToViewPos(v.vertex), 1.0);
+                float3 normal = mul((float3x3)UNITY_MATRIX_IT_MV, v.normal); // 把法线转换到视觉view空间
                 normal.z = -0.5;
                 pos = pos + float4(normalize(normal), 0) * _Outline;
                 o.pos = mul(UNITY_MATRIX_P, pos);
@@ -77,19 +72,32 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
 
             #pragma multi_compile_fwdbase
 
+            #include "UnityCG.cginc"
+            #include "autolight.cginc"
+            #include "lighting.cginc"
+
+            fixed4 _Color;
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            sampler2D _Ramp;
+            float _Outline;
+            fixed4 _OutlineColor;
+            fixed4 _Specular;
+            float _SpecularScale;
+
             struct a2v
             {
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
                 float2 texcoord : TEXCOORD0;
-            }
+            };
 
             struct v2f
             {
-                flaot4 pos : SV_POSITION;
+                float4 pos : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float3 worldNormal : TEXCOORD1;
-                float3 worldPos : TEXCOORD2;
+                float4 worldPos : TEXCOORD2;
                 SHADOW_COORDS(3)
             };
 
@@ -98,8 +106,8 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-                o.worldNormal = mul(v.normal, (float3x3)unity_WorldToObject); // ???
-                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex);
 
                 TRANSFER_SHADOW(o);
 
@@ -114,26 +122,25 @@ Shader "Unity Shaders Book/Chapter 14/Toon Shading"
                 fixed3 worldHalfDir = normalize(worldLightDir + worldViewDir);
 
                 fixed4 color = tex2D(_MainTex, i.uv);
-                fixed3 albedo = color.rgb * _Color.rgb;
+                fixed3 albedo = color.rgb * _Color.rgb;  // 无光贴图
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz * albedo;  // 环境光
 
                 UNITY_LIGHT_ATTENUATION(atten, i, i.worldPos);
 
-                fixed diff = dot(worldNormal, worldLightDir);
+                fixed diff = dot(worldNormal, worldLightDir);  // 漫反射
                 diff = (diff * 0.5 + 0.5) * atten;
+                fixed3 diffuse = _LightColor0.rgb * albedo * tex2D(_Ramp, float2(diff, diff)).rgb; // ramp贴图改变漫反射系数
 
-                fixed3 diffuse = _LightColor0.rgb * albedo * tex2D(_Ramp, float2(diff, diff)).rgb;
-
-                fixed spec = dot(worldNormal, worldHalfDir);
+                fixed spec = dot(worldNormal, worldHalfDir);  // 高光反射specular
                 fixed w = fwidth(spec) * 2.0;
-                fixed3 specular = _Specular.rgb * lerp(0, 1, smoothstep(-w, w, spec + _SpecularScale - 1)) * steep(0.0001, _SpecularScale);
+                fixed3 specular = _Specular.rgb * lerp(0, 1, smoothstep(-w, w, spec + _SpecularScale - 1)) * step(0.0001, _SpecularScale);
 
                 return fixed4(ambient + diffuse + specular, 1.0);
                 
             }
 
-
-
             ENDCG
         }
     }
+    Fallback "Diffuse"
 }
