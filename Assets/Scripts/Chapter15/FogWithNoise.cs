@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FogWithDepthTexture : PostEffectBase
+public class FogWithNoise : PostEffectBase
 {
     public Shader fogShader;
 
@@ -17,6 +17,7 @@ public class FogWithDepthTexture : PostEffectBase
     }
 
     private Camera myCamera;
+
     public Camera camera
     {
         get
@@ -26,26 +27,37 @@ public class FogWithDepthTexture : PostEffectBase
             return myCamera;
         }
     }
+
     private Transform myCameraTransform;
+
     public Transform cameraTransform
     {
         get
         {
-            if(myCameraTransform == null)
-            {
+            if (myCameraTransform == null)
                 myCameraTransform = camera.transform;
-            }
             return myCameraTransform;
         }
     }
 
-    [Range(0.0f, 3.0f)]
+    [Range(0.1f, 3.0f)]
     public float fogDensity = 1.0f;
 
     public Color fogColor = Color.white;
 
     public float fogStart = 0.0f;
     public float fogEnd = 2.0f;
+
+    public Texture noiseTexture;
+
+    [Range(-0.5f, 0.5f)]
+    public float fogXSpeed = 0.1f;
+
+    [Range(-0.5f, 0.5f)]
+    public float fogYSpeed = 0.1f;
+
+    [Range(0.0f, 3.0f)]
+    public float noiseAmount = 1.0f;
 
     private void OnEnable()
     {
@@ -95,6 +107,11 @@ public class FogWithDepthTexture : PostEffectBase
             material.SetColor("_FogColor", fogColor);
             material.SetFloat("_FogStart", fogStart);
             material.SetFloat("_FogEnd", fogEnd);
+
+            material.SetTexture("_NoiseTex", noiseTexture);
+            material.SetFloat("_FogXSpeed", fogXSpeed);
+            material.SetFloat("_FogYSpeed", fogYSpeed);
+            material.SetFloat("_NoiseAmount", noiseAmount);
 
             Graphics.Blit(source, destination, material);
         }
